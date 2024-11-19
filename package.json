@@ -6,13 +6,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --exec ts-node index.ts",
-    "postinstall": "pnpm link ssv-sdk"
+    "postinstall": "pnpm link ../ssv-sdk"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ssv-sdk": "link:ssv-sdk"
+    "ssv-sdk": "link:../ssv-sdk"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",
