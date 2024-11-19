@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "target": "ES2020",
+    "moduleResolution": "Bundler",
     "noEmit": true,
     "outDir": "dist",
     "baseUrl": ".",
@@ -11,8 +13,7 @@
     "noUnusedParameters": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "sourceMap": true,
-    "resolveJsonModule": true
+    "sourceMap": true
   },
   "include": ["index.ts"],
   "exclude": ["dist", "node_modules", "ssv-sdk"]
