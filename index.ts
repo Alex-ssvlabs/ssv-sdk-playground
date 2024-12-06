@@ -1,66 +1,112 @@
 import { SSVSDK } from "ssv-sdk";
-import { createValidatorKeys } from "ssv-sdk/dist/libs/utils/methods/create-validator-keys";
-console.log("SSVSDK:", SSVSDK);
+import { operators } from './mock'
+import { parseEther } from 'viem'
+import * as fs from 'fs';
+import * as path from 'path';
 
-const sdk = new SSVSDK({
-  chain: "holesky",
-  private_key: "0x_your_private_key_here",
-});
+async function main(): Promise<void> {
+    
+    const sdk = new SSVSDK({
+        chain: 'holesky',
+        private_key: "",
+    })
 
-// (async () => {
-//   // api usage
-//   const operator = await sdk.api.getOperator({ id: "844" });
+    console.log(operators.keys)
+    console.log(operators.ids.map((id) => Number(id)))
 
-//   // direct contract interaction (read)
-//   const contractOperator = await sdk.contract.ssv.read.getOperatorById({
-//     operatorId: 844n,
-//   });
+    const directoryPath = './validator_keys'; // Replace with the directory containing your keystor files
+    let  keystoresArray
+    try {
+        
+        keystoresArray = await loadKeystores(directoryPath);
+        console.log('Loaded keystores: Keystore Amount: ', keystoresArray.length);
+    } catch (error) {
+        console.error('Failed to load keystores:', error);
+    }
 
-//   // direct contract interaction (write)
-//   const tx = await sdk.contract.ssv.write.registerOperator({
-//     args: {
-//       publicKey: `0x...`,
-//       fee: 10000000000n,
-//       setPrivate: true,
-//     },
-//   });
+    
+    await sdk.contract.token.write
+    .approve({
+      args: {
+        spender: sdk.core.contractAddresses.setter,
+        amount: parseEther('10000'),
+        },
+        })
+        .then((tx) => tx.wait())
 
-//   // to wait for the transaction to be mined
-//   await tx.wait();
+    let nonce = Number(await sdk.api.getOwnerNonce({ owner: "0xA4831B989972605A62141a667578d742927Cbef9"}))
+    console.log("Initial nonce: ", nonce)
 
-//   // smart functions that will send the transaction for you
-//   const { keystores } = await createValidatorKeys({
-//     count: 1,
-//     chain: "holesky",
-//     withdrawal: `0x...`,
-//     password: "123123123",
-//   });
+    const chunkSize = 40; // Number of validators per transaction 
+    for (let i = 0; i < keystoresArray.length; i += chunkSize) {
+        const chunk = keystoresArray.slice(i, i + chunkSize);
 
-//   // 1st way to register validators -----------------------
-//   const extracted = await sdk.utils.generateKeyShares({
-//     keystore: JSON.stringify(keystores[0]),
-//     keystore_password: "123123123",
-//     operator_keys: [],
-//     operator_ids: [],
-//     owner_address: `0x...`,
-//     nonce: 1,
-//   });
+        const keystoreValues = chunk.map(item => item.keystore);
 
-//   const receipt = await sdk.clusters
-//     .registerValidators({
-//       keyshares: [extracted],
-//     })
-//     .then((tx) => tx.wait());
-//   // ----------------------------------------------------------------
+        const keysharesPayload = await sdk.utils.generateKeyShares({
+          keystore: keystoreValues,
+          keystore_password: 'test1234',
+          operator_keys: operators.keys,
+          operator_ids: operators.ids.map((id) => Number(id)),
+          owner_address: "0xA4831B989972605A62141a667578d742927Cbef9",
+          nonce: nonce,
+        })
 
-//   // 2nd way to register validators -----------------------
-//   const shares = await sdk.utils.createShares({
-//     operatorIds: [],
-//     keyshares: "", // a keyshares file string or an object
-//   });
+        nonce = nonce + Number(chunk.length)
+        console.log("New nonce: ", nonce)
 
-//   const receipt = await sdk.clusters
-//     .registerValidators({ keyshares: shares.available })
-//     .then((tx) => tx.wait());
-//   // ----------------------------------------------------------------
-// })();
+        // TODO: validate keysharesPayload
+
+        let txn_receipt
+        try { 
+          console.log(`Processing chunk from index ${i} to ${i + chunk.length - 1}`);
+          txn_receipt = await sdk.clusters.registerValidators({ keyshares: keysharesPayload, depositAmount: parseEther('30')}).then(tx=>tx.wait())
+          console.log("txn_receipt: ", txn_receipt)
+        } catch (error) {
+          logErrorToFile(error);
+          console.log("Failed to do register: ", error)
+        }
+    }    
+}
+
+async function loadKeystores(directory: string): Promise<{ name: string; keystore: any }[]> {
+    const keystoresArray: { name: string; keystore: any }[] = [];
+  
+    try {
+        const files = await fs.promises.readdir(directory);
+  
+        for (const file of files) {
+            if (file.startsWith('keystore-m') && file.endsWith('.json')) {
+                const filePath = path.join(directory, file);
+  
+                const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+                const jsonContent = JSON.parse(fileContent);
+                keystoresArray.push({ name: file, keystore: jsonContent });
+            }
+        }
+  
+        return keystoresArray;
+    } catch (error) {
+        console.error('Error loading keystores:', error);
+        throw error;
+    }
+}
+
+function logErrorToFile(error: unknown): void {
+  const errorMessage = `Failed to do register: ${error instanceof Error ? error.message : String(error)}\n`;
+
+  // Log the error to the console
+  console.log(errorMessage);
+
+  // Save the error message to a local file
+  const filePath = './error-log.txt';
+  fs.appendFile(filePath, errorMessage, (err) => {
+      if (err) {
+          console.error("Failed to write to file: ", err);
+      } else {
+          console.log(`Error saved to file: ${filePath}`);
+      }
+  });
+}
+
+main();

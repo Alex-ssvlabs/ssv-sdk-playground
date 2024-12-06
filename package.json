@@ -5,14 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --exec ts-node index.ts",
-    "postinstall": "if not exist ssv-sdk ( git clone https://github.com/ssvlabs/ssv-sdk.git && cd ssv-sdk && pnpm install )"
+    "start": "nodemon --exec ts-node index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ssv-sdk": "link:./ssv-sdk"
+    "ssv-sdk": "github:ssvlabs/ssv-sdk",
+    "viem": "^2.21.48"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",
