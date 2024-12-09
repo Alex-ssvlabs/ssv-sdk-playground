@@ -1,20 +1,27 @@
 import { SSVSDK } from "ssv-sdk";
 import { operators } from './mock'
 import { parseEther } from 'viem'
+import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 
+dotenv.config();  
+
 async function main(): Promise<void> {
     
+
+    const private_key: `0x${string}` = process.env.PRIVATE_KEY as `0x${string}`;
+    const chain: 'holesky' | 'mainnet' = process.env.CHAIN as 'holesky' | 'mainnet';
+
     const sdk = new SSVSDK({
-        chain: 'holesky',
-        private_key: "",
+        chain: chain,
+        private_key: private_key,
     })
 
     console.log(operators.keys)
     console.log(operators.ids.map((id) => Number(id)))
 
-    const directoryPath = './validator_keys'; // Replace with the directory containing your keystor files
+    const directoryPath = process.env.KEYSTORE_FILE_DIRECTORY;
     let  keystoresArray
     try {
         
@@ -31,10 +38,10 @@ async function main(): Promise<void> {
         spender: sdk.core.contractAddresses.setter,
         amount: parseEther('10000'),
         },
-        })
-        .then((tx) => tx.wait())
+    })
+    .then((tx) => tx.wait())
 
-    let nonce = Number(await sdk.api.getOwnerNonce({ owner: "0xA4831B989972605A62141a667578d742927Cbef9"}))
+    let nonce = Number(await sdk.api.getOwnerNonce({ owner: process.env.OWNER_ADDRESS}))
     console.log("Initial nonce: ", nonce)
 
     const chunkSize = 40; // Number of validators per transaction 
@@ -45,10 +52,10 @@ async function main(): Promise<void> {
 
         const keysharesPayload = await sdk.utils.generateKeyShares({
           keystore: keystoreValues,
-          keystore_password: 'test1234',
+          keystore_password: process.env.KEYSTORE_PASSWORD,
           operator_keys: operators.keys,
           operator_ids: operators.ids.map((id) => Number(id)),
-          owner_address: "0xA4831B989972605A62141a667578d742927Cbef9",
+          owner_address: process.env.OWNER_ADDRESS,
           nonce: nonce,
         })
 

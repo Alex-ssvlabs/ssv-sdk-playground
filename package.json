@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "ssv-sdk": "github:ssvlabs/ssv-sdk",
     "viem": "^2.21.48"
   },
