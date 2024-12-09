@@ -3,3 +3,4 @@ ssv-sdk/*
 ssv-sdk
 node_modules
 .env
+validator_keys/
