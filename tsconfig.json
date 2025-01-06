@@ -1,20 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "moduleResolution": "Bundler",
-    "noEmit": true,
-    "outDir": "dist",
-    "baseUrl": ".",
-    "allowUnusedLabels": false,
-    "allowUnreachableCode": false,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "target": "es2022",
+    "module": "commonjs",
+    "lib": ["es2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "sourceMap": true
   },
-  "include": ["index.ts"],
-  "exclude": ["dist", "node_modules", "ssv-sdk"]
-}
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.test.ts"]
+} 
