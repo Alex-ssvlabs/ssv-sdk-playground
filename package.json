@@ -6,15 +6,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --exec ts-node index.ts",
+    "registerOperators": "nodemon --exec ts-node operators.ts",
+    "registerValidators": "nodemon --exec ts-node validators.ts",
     "postinstall": ""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "dotenv": "^16.4.7",
-    "ssv-sdk": "github:ssvlabs/ssv-sdk",
-    "viem": "^2.21.48"
+    "@ssv-labs/ssv-sdk": "^0.0.3",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",
