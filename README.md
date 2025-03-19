@@ -1,6 +1,6 @@
 # ssv-sdk-playground
 
-## Clone repository
+## Clone repository and install dependencies
 In order to use this project, please clone it:
 ```sh
 git clone git@github.com:RaekwonIII/ssv-sdk-playground.git
@@ -9,6 +9,14 @@ or
 ```sh
 git clone https://github.com/RaekwonIII/ssv-sdk-playground.git
 ```
+
+Then install dependencies by running the command:
+
+```sh
+npm i
+```
+
+If you do not have Node.js installed, [please visit the official website](https://nodejs.org/en/download).
 
 ## Edit configuration
 
