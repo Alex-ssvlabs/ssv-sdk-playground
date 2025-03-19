@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
 import { hoodi } from "./hoodi";
-import { KeySharesPayload, PubKey } from "./types";
+import { Operator, PubKey } from "./types";
 
 dotenv.config();
 
@@ -13,7 +13,8 @@ async function main(): Promise<void> {
   if (
     !process.env.OWNER_ADDRESS ||
     !process.env.KEYSTORES_FILE_DIRECTORY ||
-    !process.env.KEYSTORE_PASSWORD
+    !process.env.KEYSTORE_PASSWORD ||
+    !process.env.OPERATORS_FILEPATH
   ) {
     throw new Error("Required environment variables are not set");
   }
@@ -54,13 +55,20 @@ async function main(): Promise<void> {
     throw error; // Exit if we can't load keystores
   }
 
+  let operatorData = await getOperatorData(process.env.OPERATORS_FILEPATH);
+
+  let nonce = Number(
+    await sdk.api.getOwnerNonce({ owner: process.env.OWNER_ADDRESS })
+  );
+  console.log("Initial nonce: ", nonce);
+
   const keysharesPayloads = await sdk.utils.generateKeyShares({
-    keystore: "",
-    keystore_password: "",
-    operator_keys: ["", "", "", "", ""],
-    operator_ids: [1, 2, 3, 4],
+    keystore: keystoresArray,
+    keystore_password: process.env.KEYSTORE_PASSWORD,
+    operator_keys: operatorData.map((operator) => operator.pubkey),
+    operator_ids: operatorData.map((operator) => operator.id),
     owner_address: process.env.OWNER_ADDRESS,
-    nonce: 1,
+    nonce: nonce,
   });
 
   await registerValidators(keysharesPayloads, sdk);
@@ -87,6 +95,14 @@ async function loadKeystores(directory: string): Promise<any[]> {
     console.error("Error loading keystores:", error);
     throw error;
   }
+}
+
+async function getOperatorData(filePath:string) {
+    let operatorData: Operator[] = [];
+
+    const fileContent = await fs.promises.readFile(filePath, "utf-8");
+    operatorData = JSON.parse(fileContent);
+    return operatorData
 }
 
 async function registerValidators(keyshares: any, sdk: SSVSDK) {

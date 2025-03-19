@@ -12,12 +12,6 @@ export type DepositData = {
   network_name: 'mainnet' | 'holesky' | 'hoodi'
 }
 
-export interface KeySharesPayload {
-  sharesData: string;
-  publicKey: string;
-  operatorIds: number[];
-}
-
 export interface Operator {
   id: number;
   pubkey: string;
