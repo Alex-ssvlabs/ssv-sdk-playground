@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --exec ts-node index.ts",
-    "registerOperators": "nodemon --exec ts-node operators.ts",
-    "registerValidators": "nodemon --exec ts-node validators.ts",
+    "registerOperators": "node --experimental-strip-types src/operators.ts",
+    "registerValidators": "node --experimental-strip-types src/validators.ts",
     "postinstall": ""
   },
   "keywords": [],

@@ -4,6 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import { hoodi } from "./hoodi";
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ interface KeySharesPayload {
     publicKey: string;
     operatorIds: number[];
 }
+
+
 
 async function main(): Promise<void> {
 
@@ -23,7 +26,8 @@ async function main(): Promise<void> {
     const private_key: `0x${string}` = process.env.PRIVATE_KEY as `0x${string}`;
 
     // Setup viem clients
-    const chain = chains.holesky // TODO hoodi
+    // const chain = chains.holesky
+    const chain = hoodi 
     const transport = http()
 
     const publicClient = createPublicClient({

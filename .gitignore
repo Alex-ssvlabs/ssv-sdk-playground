@@ -1,7 +1,4 @@
-ssv-sdk/
-ssv-sdk/*
-ssv-sdk
 node_modules
 .env
-validator_keys
 validator_keys/*
+operators.json
