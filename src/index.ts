@@ -1,113 +1,129 @@
 import { SSVSDK, chains } from "@ssv-labs/ssv-sdk";
-import { parseEther, createPublicClient, createWalletClient, http } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
-import * as dotenv from 'dotenv';
-import * as fs from 'fs';
-import * as path from 'path';
+import { parseEther, createPublicClient, createWalletClient, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import * as dotenv from "dotenv";
+import * as fs from "fs";
+import * as path from "path";
 import { hoodi } from "./hoodi";
+import { KeySharesPayload, PubKey } from "./types";
 
 dotenv.config();
 
-interface KeySharesPayload {
-    sharesData: string;
-    publicKey: string;
-    operatorIds: number[];
-}
-
-
-
 async function main(): Promise<void> {
+  if (
+    !process.env.OWNER_ADDRESS ||
+    !process.env.KEYSTORES_FILE_DIRECTORY ||
+    !process.env.KEYSTORE_PASSWORD
+  ) {
+    throw new Error("Required environment variables are not set");
+  }
 
-    if (!process.env.KEYSHARES_FILE_DIRECTORY || 
-        !process.env.OWNER_ADDRESS) {
-        throw new Error('Required environment variables are not set');
-    }
+  const private_key: PubKey = process.env.PRIVATE_KEY as PubKey;
 
-    const private_key: `0x${string}` = process.env.PRIVATE_KEY as `0x${string}`;
+  // Setup viem clients
+  // const chain = chains.holesky
+  const chain = hoodi;
+  const transport = http();
 
-    // Setup viem clients
-    // const chain = chains.holesky
-    const chain = hoodi 
-    const transport = http()
+  const publicClient = createPublicClient({
+    chain,
+    transport,
+  });
 
-    const publicClient = createPublicClient({
-        chain,
-        transport
-    })
+  const account = privateKeyToAccount(private_key);
+  const walletClient = createWalletClient({
+    account,
+    chain,
+    transport,
+  });
 
-    const account = privateKeyToAccount(private_key)
-    const walletClient = createWalletClient({
-        account,
-        chain,
-        transport,
-    })
+  // Initialize SDK with viem clients
+  const sdk = new SSVSDK({
+    publicClient,
+    walletClient,
+  });
 
-    // Initialize SDK with viem clients
-    const sdk = new SSVSDK({
-        publicClient,
-        walletClient,
-    })
+  // TODO generate keystore with lodestar libraries
 
-    let keysharesArray = await loadKeyshares(process.env.KEYSHARES_FILE_DIRECTORY)
+  let keystoresArray: any[];
+  try {
+    keystoresArray = await loadKeystores(process.env.KEYSTORES_FILE_DIRECTORY);
+    console.log("Loaded keystores: Keystore Amount: ", keystoresArray.length);
+  } catch (error) {
+    console.error("Failed to load keystores:", error);
+    throw error; // Exit if we can't load keystores
+  }
 
-    await registerValidators(keysharesArray, sdk)
+  const keysharesPayloads = await sdk.utils.generateKeyShares({
+    keystore: "",
+    keystore_password: "",
+    operator_keys: ["", "", "", "", ""],
+    operator_ids: [1, 2, 3, 4],
+    owner_address: process.env.OWNER_ADDRESS,
+    nonce: 1,
+  });
+
+  await registerValidators(keysharesPayloads, sdk);
 }
 
-async function loadKeyshares(directory: string): Promise<KeySharesPayload[]> {
-    let keysharesArray: KeySharesPayload[] = [];
+async function loadKeystores(directory: string): Promise<any[]> {
+  const keystoresArray: any[] = [];
 
-    try {
-        const files = await fs.promises.readdir(directory);
+  try {
+    const files = await fs.promises.readdir(directory);
 
-        for (const file of files) {
-            if (file.startsWith('keyshares') && file.endsWith('.json')) {
-                const filePath = path.join(directory, file);
+    for (const file of files) {
+      if (file.endsWith(".json")) {
+        const filePath = path.join(directory, file);
 
-                const fileContent = await fs.promises.readFile(filePath, 'utf-8');
-                const jsonContent = JSON.parse(fileContent);
-                
-                keysharesArray = jsonContent.shares as KeySharesPayload[]
-            }
-        }
-
-        return keysharesArray;
-    } catch (error) {
-        console.error('Error loading keystores:', error);
-        throw error;
+        const fileContent = await fs.promises.readFile(filePath, "utf-8");
+        const jsonContent = JSON.parse(fileContent);
+        keystoresArray.push(jsonContent);
+      }
     }
+
+    return keystoresArray;
+  } catch (error) {
+    console.error("Error loading keystores:", error);
+    throw error;
+  }
 }
 
 async function registerValidators(keyshares: any, sdk: SSVSDK) {
-    let txn_receipt
-    try {
-        txn_receipt = await sdk.clusters.registerValidators({ 
-            args: { 
-                keyshares: keyshares, 
-                depositAmount: parseEther('30') 
-            },
-        }).then(tx => tx.wait())
-        console.log("txn_receipt: ", txn_receipt)
-    } catch (error) {
-        logErrorToFile(error);
-        console.log("Failed to register: ", error)
-    }
+  let txn_receipt;
+  try {
+    txn_receipt = await sdk.clusters
+      .registerValidators({
+        args: {
+          keyshares: keyshares,
+          depositAmount: parseEther("30"),
+        },
+      })
+      .then((tx) => tx.wait());
+    console.log("txn_receipt: ", txn_receipt);
+  } catch (error) {
+    logErrorToFile(error);
+    console.log("Failed to register: ", error);
+  }
 }
 
 function logErrorToFile(error: unknown): void {
-    const errorMessage = `Failed to do register: ${error instanceof Error ? error.message : String(error)}\n`;
+  const errorMessage = `Failed to do register: ${
+    error instanceof Error ? error.message : String(error)
+  }\n`;
 
-    // Log the error to the console
-    console.log(errorMessage);
+  // Log the error to the console
+  console.log(errorMessage);
 
-    // Save the error message to a local file
-    const filePath = './error-log.txt';
-    fs.appendFile(filePath, errorMessage, (err) => {
-        if (err) {
-            console.error("Failed to write to file: ", err);
-        } else {
-            console.log(`Error saved to file: ${filePath}`);
-        }
-    });
+  // Save the error message to a local file
+  const filePath = "./error-log.txt";
+  fs.appendFile(filePath, errorMessage, (err) => {
+    if (err) {
+      console.error("Failed to write to file: ", err);
+    } else {
+      console.log(`Error saved to file: ${filePath}`);
+    }
+  });
 }
 
 main();

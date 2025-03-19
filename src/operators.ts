@@ -4,13 +4,9 @@ import { privateKeyToAccount } from "viem/accounts";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import { hoodi } from "./hoodi";
+import { Operator } from "./types";
 
 dotenv.config();
-
-interface Operator {
-  id: number;
-  pubkey: string;
-}
 
 async function main(): Promise<void> {
   if (
