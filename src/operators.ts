@@ -7,43 +7,8 @@ import * as fs from "fs";
 dotenv.config();
 
 interface Operator {
-  id: number;
+  id: bigint;
   pubkey: string;
-}
-
-async function registerOperators(
-  pubkeys: string[],
-  sdk: SSVSDK
-): Promise<Operator[]> {
-  const operatorObjs: Operator[] = [];
-  for (let pubkey of pubkeys) {
-    const register_receipt = await sdk.operators
-      .registerOperator({
-        args: {
-          publicKey: pubkey,
-          yearlyFee: 0n,
-          isPrivate: true,
-        },
-      })
-      .then((tx) => tx.wait());
-    // TODO get operator ID from receipt
-    // register_receipt.events[0].
-    const operatorID = 1;
-    operatorObjs.push({ id: operatorID, pubkey });
-  }
-  return operatorObjs;
-}
-
-function writeOperatorsToFile(operatorsObj: Operator[], filePath: string): void {
-    const jsonString = JSON.stringify(operatorsObj)
-    // Save the error message to a local file
-    fs.appendFile(filePath, jsonString, (err) => {
-        if (err) {
-            console.error("Failed to write to file: ", err);
-        } else {
-            console.log(`Operators saved to file: ${filePath}`);
-        }
-    });
 }
 
 async function main(): Promise<void> {
@@ -81,6 +46,40 @@ async function main(): Promise<void> {
 
   writeOperatorsToFile(operatorObjs, process.env.OPERATORS_FILEPATH)
 
+}
+
+async function registerOperators(
+  pubkeys: string[],
+  sdk: SSVSDK
+): Promise<Operator[]> {
+  const operatorObjs: Operator[] = [];
+  for (let pubkey of pubkeys) {
+    const register_receipt = await sdk.operators
+      .registerOperator({
+        args: {
+          publicKey: pubkey,
+          yearlyFee: 0n,
+          isPrivate: true,
+        },
+      })
+      .then((tx) => tx.wait());
+    let event = register_receipt.events.find((e) => e.eventName === "OperatorAdded")
+    const operatorID = event?.args.operatorId || 1n;
+    operatorObjs.push({ id: operatorID, pubkey });
+  }
+  return operatorObjs;
+}
+
+function writeOperatorsToFile(operatorsObj: Operator[], filePath: string): void {
+    const jsonString = JSON.stringify(operatorsObj)
+    // Save the error message to a local file
+    fs.appendFile(filePath, jsonString, (err) => {
+        if (err) {
+            console.error("Failed to write to file: ", err);
+        } else {
+            console.log(`Operators saved to file: ${filePath}`);
+        }
+    });
 }
 
 main();

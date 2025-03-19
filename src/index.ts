@@ -23,7 +23,7 @@ async function main(): Promise<void> {
     const private_key: `0x${string}` = process.env.PRIVATE_KEY as `0x${string}`;
 
     // Setup viem clients
-    const chain = chains.holesky // or chains.mainnet
+    const chain = chains.holesky // TODO hoodi
     const transport = http()
 
     const publicClient = createPublicClient({
@@ -47,7 +47,6 @@ async function main(): Promise<void> {
     let keysharesArray = await loadKeyshares(process.env.KEYSHARES_FILE_DIRECTORY)
 
     await registerValidators(keysharesArray, sdk)
-    
 }
 
 async function loadKeyshares(directory: string): Promise<KeySharesPayload[]> {
