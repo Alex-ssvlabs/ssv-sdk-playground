@@ -11,6 +11,7 @@ dotenv.config();
 async function main(): Promise<void> {
   if (
     !process.env.PRIVATE_KEY ||
+    !process.env.OWNER_ADDRESS ||
     !process.env.OPERATOR_PUBKEYS ||
     !process.env.OPERATORS_FILEPATH
   ) {
@@ -44,34 +45,58 @@ async function main(): Promise<void> {
 
   const operatorPubkeys = process.env.OPERATOR_PUBKEYS.split(",");
 
-  const operatorObjs = await registerOperators(operatorPubkeys, sdk);
+  const operatorObjs = await registerOperators(
+    operatorPubkeys,
+    sdk,
+    process.env.OWNER_ADDRESS as `0x${string}`
+  );
 
   writeOperatorsToFile(operatorObjs, process.env.OPERATORS_FILEPATH);
 }
 
 async function registerOperators(
   pubkeys: string[],
-  sdk: SSVSDK
+  sdk: SSVSDK,
+  owner_address: `0x${string}`
 ): Promise<Operator[]> {
   const operatorObjs: Operator[] = [];
   for (let pubkey of pubkeys) {
     console.log(`Registering operator with pubkey: ${pubkey}`);
-    const register_receipt = await sdk.operators
-      .registerOperator({
+    try {
+      const register_receipt = await sdk.operators
+        .registerOperator({
+          args: {
+            publicKey: pubkey,
+            yearlyFee: 0n,
+            isPrivate: true,
+          },
+        })
+        .then((tx) => tx.wait());
+      let event = register_receipt.events.find(
+        (e) => e.eventName === "OperatorAdded"
+      );
+      const operatorID = event?.args.operatorId || 1n;
+      console.log(`Successfully registered with OperatorID: ${operatorID}`);
+      operatorObjs.push({ id: Number(operatorID), pubkey });
+    } catch (error) {
+      console.log("Failed to register: ", error);
+    }
+  }
+  // whitelist the owner address to these registered operators
+  try {
+    let whitelist_receipt = sdk.operators
+      .setOperatorWhitelists({
         args: {
-          publicKey: pubkey,
-          yearlyFee: 0n,
-          isPrivate: true,
+          operatorIds: operatorObjs.map((operator) => BigInt(operator.id)),
+          whitelistAddresses: [owner_address],
         },
       })
       .then((tx) => tx.wait());
-    let event = register_receipt.events.find(
-      (e) => e.eventName === "OperatorAdded"
-    );
-    const operatorID = event?.args.operatorId || 1n;
-    console.log(`Successfully registered with OperatorID: ${operatorID}`);
-    operatorObjs.push({ id: Number(operatorID), pubkey });
+    console.log("whitelist_receipt: ", whitelist_receipt);
+  } catch (error) {
+    console.log("Failed to register: ", error);
   }
+
   return operatorObjs;
 }
 
