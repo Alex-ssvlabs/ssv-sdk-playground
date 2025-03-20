@@ -15,8 +15,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ssv-labs/ssv-sdk": "^0.0.3",
-    "dotenv": "^16.4.7"
+    "@chainsafe/bls": "^8.1.0",
+    "@chainsafe/bls-keygen": "^0.4.0",
+    "@chainsafe/bls-keystore": "^3.1.0",
+    "@chainsafe/ssz": "^1.2.0",
+    "@lodestar/config": "^1.27.1",
+    "@lodestar/params": "^1.27.1",
+    "@lodestar/state-transition": "^1.27.1",
+    "@lodestar/types": "^1.27.1",
+    "@ssv-labs/ssv-sdk": "^0.0.4",
+    "abitype": "^1.0.8",
+    "dotenv": "^16.4.7",
+    "viem": "^2.23.12"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",
