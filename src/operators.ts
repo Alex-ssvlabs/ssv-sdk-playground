@@ -84,7 +84,7 @@ async function registerOperators(
   }
   // whitelist the owner address to these registered operators
   try {
-    let whitelist_receipt = sdk.operators
+    let whitelist_receipt = await sdk.operators
       .setOperatorWhitelists({
         args: {
           operatorIds: operatorObjs.map((operator) => BigInt(operator.id)),
