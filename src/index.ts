@@ -4,8 +4,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
-import { hoodi } from "./hoodi";
-import { Operator, PubKey } from "./types";
+import { hoodi } from "./hoodi.js";
+import { Operator, PubKey } from "./types.js";
 
 dotenv.config();
 
