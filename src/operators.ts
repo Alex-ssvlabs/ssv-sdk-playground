@@ -3,7 +3,7 @@ import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
-import { hoodi } from "./hoodi";
+import { hoodi } from "./hoodi.js";
 import { Operator } from "./types";
 
 dotenv.config();
@@ -21,7 +21,6 @@ async function main(): Promise<void> {
   const private_key: `0x${string}` = process.env.PRIVATE_KEY as `0x${string}`;
 
   // Setup viem clients
-  //   const chain = chains.holesky;
   const chain = hoodi;
   const transport = http();
 
@@ -92,7 +91,7 @@ async function registerOperators(
         },
       })
       .then((tx) => tx.wait());
-    console.log("whitelist_receipt: ", whitelist_receipt);
+    console.log("Whitelist transaction hash: ", whitelist_receipt.transactionHash);
   } catch (error) {
     console.log("Failed to register: ", error);
   }

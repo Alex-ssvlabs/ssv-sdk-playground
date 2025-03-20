@@ -1,7 +1,7 @@
 import { defineChain } from 'viem'
  
 export const hoodi = defineChain({
-  id: 7777777,
+  id: 560048,
   name: 'Hoodi',
   nativeCurrency: {
     decimals: 18,

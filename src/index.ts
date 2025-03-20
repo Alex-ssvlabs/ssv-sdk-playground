@@ -22,7 +22,6 @@ async function main(): Promise<void> {
   const private_key: PubKey = process.env.PRIVATE_KEY as PubKey;
 
   // Setup viem clients
-  // const chain = chains.holesky
   const chain = hoodi;
   const transport = http();
 
@@ -52,8 +51,6 @@ async function main(): Promise<void> {
       },
   })
   .then((tx) => tx.wait())
-
-  // TODO generate keystore with lodestar libraries
 
   let keystoresArray: any[];
   try {
@@ -125,7 +122,7 @@ async function registerValidators(keyshares: any, sdk: SSVSDK) {
         },
       })
       .then((tx) => tx.wait());
-    console.log("txn_receipt: ", txn_receipt);
+    console.log("Registered validators, tx hash:: ", txn_receipt.transactionHash);
   } catch (error) {
     logErrorToFile(error);
     console.log("Failed to register: ", error);
