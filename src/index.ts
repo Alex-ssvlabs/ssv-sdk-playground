@@ -43,6 +43,15 @@ async function main(): Promise<void> {
     publicClient,
     walletClient,
   });
+  
+  await sdk.contract.token.write
+  .approve({
+      args: {
+          spender: sdk.config.contractAddresses.setter,
+          amount: parseEther('1000'),
+      },
+  })
+  .then((tx) => tx.wait())
 
   // TODO generate keystore with lodestar libraries
 
