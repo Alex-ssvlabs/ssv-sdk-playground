@@ -13,15 +13,17 @@ async function main(): Promise<void> {
   if (
     !process.env.OWNER_ADDRESS ||
     !process.env.KEYSTORES_FILE_DIRECTORY ||
-    !process.env.KEYSTORE_PASSWORD ||
     !process.env.OPERATORS_FILEPATH
   ) {
     throw new Error("Required environment variables are not set");
   }
 
+  const keysharesPath = process.env.KEYSTORES_FILE_DIRECTORY;
+  const keysharesPayloads = JSON.parse(fs.readFileSync(keysharesPath, 'utf-8'));
   const private_key: PubKey = process.env.PRIVATE_KEY as PubKey;
 
   // Setup viem clients
+  // const chain = chains.holesky
   const chain = hoodi;
   const transport = http();
 
@@ -42,7 +44,6 @@ async function main(): Promise<void> {
     publicClient,
     walletClient,
   });
-  
   await sdk.contract.token.write
   .approve({
       args: {
@@ -52,30 +53,33 @@ async function main(): Promise<void> {
   })
   .then((tx) => tx.wait())
 
-  let keystoresArray: any[];
-  try {
-    keystoresArray = await loadKeystores(process.env.KEYSTORES_FILE_DIRECTORY);
-    console.log("Loaded keystores: Keystore Amount: ", keystoresArray.length);
-  } catch (error) {
-    console.error("Failed to load keystores:", error);
-    throw error; // Exit if we can't load keystores
-  }
+  // TODO generate keystore with lodestar libraries
+
+//  let keystoresArray: any[];
+//  try {
+//    keystoresArray = await loadKeystores(process.env.KEYSTORES_FILE_DIRECTORY);
+//    console.log("Loaded keystores: Keystore Amount: ", keystoresArray.length);
+//  } catch (error) {
+//    console.error("Failed to load keystores:", error);
+//    throw error; // Exit if we can't load keystores
+//  }
 
   let operatorData = await getOperatorData(process.env.OPERATORS_FILEPATH);
 
   let nonce = Number(
-    await sdk.api.getOwnerNonce({ owner: process.env.OWNER_ADDRESS })
+  await sdk.api.getOwnerNonce({ owner: process.env.OWNER_ADDRESS })
   );
   console.log("Initial nonce: ", nonce);
+  //  let nonce = (0);
 
-  const keysharesPayloads = await sdk.utils.generateKeyShares({
-    keystore: keystoresArray,
-    keystore_password: process.env.KEYSTORE_PASSWORD,
-    operator_keys: operatorData.map((operator) => operator.pubkey),
-    operator_ids: operatorData.map((operator) => operator.id),
-    owner_address: process.env.OWNER_ADDRESS,
-    nonce: nonce,
-  });
+//  const keysharesPayloads = await sdk.utils.generateKeyShares({
+//    keystore: keystoresArray,
+//    keystore_password: process.env.KEYSTORE_PASSWORD,
+//    operator_keys: operatorData.map((operator) => operator.pubkey),
+//    operator_ids: operatorData.map((operator) => operator.id),
+//    owner_address: process.env.OWNER_ADDRESS,
+//    nonce: nonce,
+//  });
 
   await registerValidators(keysharesPayloads, sdk);
 }
@@ -118,11 +122,11 @@ async function registerValidators(keyshares: any, sdk: SSVSDK) {
       .registerValidators({
         args: {
           keyshares: keyshares,
-          depositAmount: parseEther("30"),
+          depositAmount: parseEther("0"),
         },
       })
       .then((tx) => tx.wait());
-    console.log("Registered validators, tx hash:: ", txn_receipt.transactionHash);
+    console.log("txn_receipt: ", txn_receipt);
   } catch (error) {
     logErrorToFile(error);
     console.log("Failed to register: ", error);
